@@ -10,6 +10,9 @@ def test_polymarket_market_parsing() -> None:
         "id": 123,
         "slug": "btc-updown-5m-1775373600",
         "question": "BTC Up or Down in 5m?",
+        "conditionId": "cond_1",
+        "startDate": "2026-03-01T00:00:00Z",
+        "endDate": "2026-03-01T00:05:00Z",
         "active": True,
         "closed": False,
         "acceptingOrders": True,
@@ -25,6 +28,7 @@ def test_polymarket_market_parsing() -> None:
 
     assert market.id == "123"
     assert market.slug == "btc-updown-5m-1775373600"
+    assert market.condition_id == "cond_1"
     assert market.outcomes == ["Yes", "No"]
     assert market.outcome_prices == [0.72, 0.28]
     assert market.clob_token_ids == ["token_yes", "token_no"]
@@ -42,6 +46,9 @@ def test_polymarket_repository_storage(tmp_path: Path) -> None:
         id="123",
         slug="btc-updown-5m-1775373600",
         question="BTC Up or Down in 5m?",
+        condition_id="cond_1",
+        start_date=datetime(2026, 3, 1, 0, 0, tzinfo=UTC),
+        end_date=datetime(2026, 3, 1, 0, 5, tzinfo=UTC),
         active=True,
         closed=False,
         accepting_orders=True,

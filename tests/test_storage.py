@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from pathlib import Path
 
+from crypto_polymarket_trading_bot.data import BinanceKline, PolymarketPricePoint
 from crypto_polymarket_trading_bot.execution import ExecutionRecord, Position
 from crypto_polymarket_trading_bot.storage import Repository, initialize_database
 from crypto_polymarket_trading_bot.strategy import OddsTick, SignalDirection, StrategyDecision
@@ -46,11 +47,17 @@ def test_database_initialization_and_basic_writes(tmp_path: Path) -> None:
     repository.log_decision(decision)
     repository.log_execution(execution)
     repository.log_position_snapshot(position, tick.timestamp)
+    repository.insert_polymarket_history([PolymarketPricePoint("m1", "slug-1", "tok1", tick.timestamp, 0.73)])
+    repository.insert_binance_klines([
+        BinanceKline("BTCUSDT", "1m", tick.timestamp, tick.timestamp, 84000, 84100, 83900, 84050, 1)
+    ])
 
     counts = repository.counts()
     assert counts["signal_events"] == 1
     assert counts["decisions"] == 1
     assert counts["positions"] == 1
     assert counts["executions"] == 1
+    assert counts["polymarket_history"] == 1
+    assert counts["binance_klines"] == 1
     assert repository.latest_decision() is not None
     assert repository.current_position() is not None

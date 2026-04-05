@@ -3,10 +3,20 @@ from __future__ import annotations
 import json
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
 import websockets
+
+
+@dataclass(slots=True)
+class PolymarketPricePoint:
+    market_id: str
+    market_slug: str | None
+    token_id: str
+    timestamp: datetime
+    price: float
 
 
 @dataclass(slots=True)
@@ -23,6 +33,9 @@ class PolymarketMarket:
     outcomes: list[str]
     outcome_prices: list[float]
     clob_token_ids: list[str]
+    condition_id: str | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
 
     @property
     def yes_price(self) -> float | None:
@@ -55,6 +68,9 @@ class PolymarketMarket:
             outcomes=_parse_string_list(payload.get("outcomes")),
             outcome_prices=_parse_float_list(payload.get("outcomePrices")),
             clob_token_ids=_parse_string_list(payload.get("clobTokenIds")),
+            condition_id=payload.get("conditionId"),
+            start_date=_parse_datetime(payload.get("startDate")),
+            end_date=_parse_datetime(payload.get("endDate")),
         )
 
     def _outcome_price(self, outcome_name: str) -> float | None:
@@ -71,15 +87,56 @@ class PolymarketMarket:
 
 
 class PolymarketClient:
-    def __init__(self, base_url: str) -> None:
-        self.base_url = base_url.rstrip("/")
+    def __init__(self, gamma_base_url: str, clob_base_url: str) -> None:
+        self.gamma_base_url = gamma_base_url.rstrip("/")
+        self.clob_base_url = clob_base_url.rstrip("/")
 
     async def get_market_by_slug(self, slug: str) -> PolymarketMarket:
-        async with httpx.AsyncClient(base_url=self.base_url, timeout=10.0) as client:
+        async with httpx.AsyncClient(base_url=self.gamma_base_url, timeout=10.0) as client:
             response = await client.get(f"/markets/slug/{slug}")
             response.raise_for_status()
             payload = dict(response.json())
             return PolymarketMarket.from_api(payload)
+
+    async def list_markets(self, limit: int, offset: int) -> list[PolymarketMarket]:
+        async with httpx.AsyncClient(base_url=self.gamma_base_url, timeout=20.0) as client:
+            response = await client.get("/markets", params={"limit": limit, "offset": offset})
+            response.raise_for_status()
+            payload = list(response.json())
+            return [PolymarketMarket.from_api(dict(row)) for row in payload]
+
+    async def get_prices_history(
+        self,
+        token_id: str,
+        start_ts: int,
+        end_ts: int,
+        fidelity: int,
+        market_id: str,
+        market_slug: str | None,
+    ) -> list[PolymarketPricePoint]:
+        async with httpx.AsyncClient(base_url=self.clob_base_url, timeout=20.0) as client:
+            response = await client.get(
+                "/prices-history",
+                params={
+                    "market": token_id,
+                    "startTs": start_ts,
+                    "endTs": end_ts,
+                    "fidelity": fidelity,
+                },
+            )
+            response.raise_for_status()
+            payload = dict(response.json())
+            history = list(payload.get("history", []))
+            return [
+                PolymarketPricePoint(
+                    market_id=market_id,
+                    market_slug=market_slug,
+                    token_id=token_id,
+                    timestamp=datetime.fromtimestamp(int(point["t"]), tz=UTC),
+                    price=float(point["p"]),
+                )
+                for point in history
+            ]
 
 
 class PolymarketMarketStream:
@@ -141,3 +198,12 @@ def _maybe_float(value: Any) -> float | None:
     if value is None or value == "":
         return None
     return float(value)
+
+
+def _parse_datetime(value: Any) -> datetime | None:
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value.astimezone(UTC)
+    text = str(value).replace("Z", "+00:00")
+    return datetime.fromisoformat(text).astimezone(UTC)

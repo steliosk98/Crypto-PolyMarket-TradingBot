@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     app_mode: AppMode = AppMode.PAPER
     symbol: str = "BTCUSDT"
     db_path: Path = Path("data/trading_bot.db")
+    reports_dir: Path = Path("data/reports")
 
     polymarket_market_slug: str | None = None
     polymarket_market_id: str | None = None
@@ -35,8 +36,15 @@ class Settings(BaseSettings):
     backtest_fee_bps: float = Field(default=4.0, ge=0.0)
     backtest_slippage_bps: float = Field(default=0.0, ge=0.0)
 
+    historical_months: int = Field(default=6, ge=1, le=24)
+    polymarket_market_page_limit: int = Field(default=50, ge=1)
+    polymarket_market_page_size: int = Field(default=100, ge=1, le=500)
+    polymarket_history_fidelity_minutes: int = Field(default=1, ge=1)
+    binance_kline_interval: str = "1m"
+
     binance_base_url: str = "https://fapi.binance.com"
-    polymarket_base_url: str = "https://clob.polymarket.com"
+    polymarket_gamma_base_url: str = "https://gamma-api.polymarket.com"
+    polymarket_clob_base_url: str = "https://clob.polymarket.com"
     polymarket_ws_url: str = "wss://ws-subscriptions-clob.polymarket.com/ws/market"
 
     streamlit_host: str = "127.0.0.1"
@@ -50,6 +58,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",
     )
 
 
