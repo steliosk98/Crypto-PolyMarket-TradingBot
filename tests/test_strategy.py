@@ -53,7 +53,7 @@ def test_neutral_ticks_do_not_emit_decisions() -> None:
 
 
 def test_late_confirmation_is_rejected_after_entry_cutoff() -> None:
-    engine = StrategyEngine(Settings())
+    engine = StrategyEngine(Settings(entry_cutoff_seconds=150))
     assert engine.process_tick(make_tick(140, 0.82)) == []
     assert engine.process_tick(make_tick(160, 0.84)) == []
     assert engine.process_tick(make_tick(170, 0.86)) == []
