@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import subprocess
 import sys
 from pathlib import Path
 
+import httpx
+
 from crypto_polymarket_trading_bot.backtest import load_ticks_from_csv, run_backtest
 from crypto_polymarket_trading_bot.config import Settings, get_settings
 from crypto_polymarket_trading_bot.execution import PaperExecutor
+from crypto_polymarket_trading_bot.ingestion import PolymarketIngestionService
 from crypto_polymarket_trading_bot.storage import Repository, initialize_database
 from crypto_polymarket_trading_bot.strategy import OddsTick, StrategyEngine
 
@@ -26,6 +30,9 @@ def build_parser() -> argparse.ArgumentParser:
     paper = subparsers.add_parser("paper", help="Replay ticks and persist paper decisions/executions.")
     paper.add_argument("--input", type=Path, required=True)
     paper.add_argument("--db-path", type=Path, default=None)
+
+    market = subparsers.add_parser("market-info", help="Resolve the configured Polymarket market slug.")
+    market.add_argument("--slug", default=None)
 
     streamlit = subparsers.add_parser("streamlit", help="Launch the read-only Streamlit dashboard.")
     streamlit.add_argument("--host", default=None)
@@ -75,6 +82,36 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Paper replay complete. Database updated at {runtime_settings.db_path}")
         return 0
 
+    if args.command == "market-info":
+        runtime_settings = _with_db_override(settings, None)
+        repository = Repository(Path(runtime_settings.db_path))
+        slug = args.slug or runtime_settings.polymarket_market_slug
+        if not slug:
+            parser.error("No market slug configured. Set BOT_POLYMARKET_MARKET_SLUG or pass --slug.")
+        try:
+            market = asyncio.run(_sync_market_info(runtime_settings, repository, slug))
+        except httpx.HTTPError as exc:
+            print(f"Failed to load Polymarket market '{slug}': {exc}")
+            return 1
+        print("Polymarket market")
+        print(f"id={market.id}")
+        print(f"slug={market.slug}")
+        print(f"question={market.question}")
+        print(f"active={market.active}")
+        print(f"closed={market.closed}")
+        print(f"accepting_orders={market.accepting_orders}")
+        print(f"best_bid={market.best_bid}")
+        print(f"best_ask={market.best_ask}")
+        print(f"last_trade_price={market.last_trade_price}")
+        print(f"outcomes={market.outcomes}")
+        print(f"outcome_prices={market.outcome_prices}")
+        print(f"clob_token_ids={market.clob_token_ids}")
+        print(f"yes_price={market.yes_price}")
+        print(f"no_price={market.no_price}")
+        print(f"yes_token_id={market.yes_token_id}")
+        print(f"no_token_id={market.no_token_id}")
+        return 0
+
     if args.command == "streamlit":
         host = args.host or settings.streamlit_host
         port = args.port or settings.streamlit_port
@@ -97,6 +134,11 @@ def main(argv: list[str] | None = None) -> int:
 
     parser.error(f"Unsupported command: {args.command}")
     return 2
+
+
+async def _sync_market_info(settings: Settings, repository: Repository, slug: str):
+    service = PolymarketIngestionService(settings, repository)
+    return await service.sync_market_by_slug(slug)
 
 
 def _with_db_override(settings: Settings, db_path: Path | None) -> Settings:

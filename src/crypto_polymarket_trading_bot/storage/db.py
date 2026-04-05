@@ -14,6 +14,39 @@ SCHEMA_STATEMENTS = (
     )
     """,
     """
+    CREATE TABLE IF NOT EXISTS polymarket_markets (
+        id TEXT PRIMARY KEY,
+        slug TEXT,
+        question TEXT,
+        active INTEGER,
+        closed INTEGER,
+        accepting_orders INTEGER,
+        best_bid REAL,
+        best_ask REAL,
+        last_trade_price REAL,
+        outcomes_json TEXT NOT NULL,
+        outcome_prices_json TEXT NOT NULL,
+        clob_token_ids_json TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS polymarket_snapshots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT NOT NULL,
+        market_id TEXT NOT NULL,
+        slug TEXT,
+        best_bid REAL,
+        best_ask REAL,
+        last_trade_price REAL,
+        yes_price REAL,
+        no_price REAL,
+        yes_token_id TEXT,
+        no_token_id TEXT,
+        raw_json TEXT NOT NULL
+    )
+    """,
+    """
     CREATE TABLE IF NOT EXISTS signal_events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp TEXT NOT NULL,
