@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
@@ -12,6 +13,16 @@ class AppMode(StrEnum):
     BACKTEST = "backtest"
     PAPER = "paper"
     LIVE = "live"
+
+
+@dataclass(frozen=True, slots=True)
+class StrategyProfile:
+    name: str
+    candle_minutes: int
+    up_threshold: float
+    down_threshold: float
+    confirmation_seconds: int
+    entry_cutoff_seconds: int
 
 
 class Settings(BaseSettings):
@@ -29,6 +40,16 @@ class Settings(BaseSettings):
     confirmation_seconds: int = Field(default=20, ge=1)
     candle_minutes: int = Field(default=5, ge=1)
     entry_cutoff_seconds: int = Field(default=150, ge=1)
+
+    five_minute_up_threshold: float = Field(default=0.90, ge=0.0, le=1.0)
+    five_minute_down_threshold: float = Field(default=0.90, ge=0.0, le=1.0)
+    five_minute_confirmation_seconds: int = Field(default=30, ge=1)
+    five_minute_entry_cutoff_seconds: int = Field(default=60, ge=1)
+
+    one_hour_up_threshold: float = Field(default=0.75, ge=0.0, le=1.0)
+    one_hour_down_threshold: float = Field(default=0.75, ge=0.0, le=1.0)
+    one_hour_confirmation_seconds: int = Field(default=120, ge=1)
+    one_hour_entry_cutoff_seconds: int = Field(default=900, ge=1)
 
     fixed_notional_usd: float = Field(default=100.0, gt=0.0)
     fixed_margin_usd: float = Field(default=25.0, gt=0.0)
@@ -63,6 +84,27 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    def strategy_profile(self, timeframe: str) -> StrategyProfile:
+        if timeframe == "5m":
+            return StrategyProfile(
+                name="5m",
+                candle_minutes=5,
+                up_threshold=self.five_minute_up_threshold,
+                down_threshold=self.five_minute_down_threshold,
+                confirmation_seconds=self.five_minute_confirmation_seconds,
+                entry_cutoff_seconds=self.five_minute_entry_cutoff_seconds,
+            )
+        if timeframe == "1h":
+            return StrategyProfile(
+                name="1h",
+                candle_minutes=60,
+                up_threshold=self.one_hour_up_threshold,
+                down_threshold=self.one_hour_down_threshold,
+                confirmation_seconds=self.one_hour_confirmation_seconds,
+                entry_cutoff_seconds=self.one_hour_entry_cutoff_seconds,
+            )
+        raise ValueError(f"Unsupported timeframe: {timeframe}")
 
 
 @lru_cache(maxsize=1)
