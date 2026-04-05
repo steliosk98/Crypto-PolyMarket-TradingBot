@@ -16,6 +16,7 @@ class OddsTick:
     timestamp: datetime
     up_odds: float
     market_id: str | None = None
+    reference_price: float | None = None
 
 
 @dataclass(slots=True)

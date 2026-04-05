@@ -9,6 +9,7 @@ def test_settings_defaults() -> None:
     assert settings.db_path == Path("data/trading_bot.db")
     assert settings.up_threshold == 0.70
     assert settings.confirmation_seconds == 10
+    assert settings.backtest_fee_bps == 4.0
 
 
 def test_settings_env_override(monkeypatch) -> None:

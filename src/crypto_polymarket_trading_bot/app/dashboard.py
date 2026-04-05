@@ -19,6 +19,9 @@ def run_dashboard() -> None:
     counts = repository.counts()
     latest_decision = repository.latest_decision()
     current_position = repository.current_position()
+    signal_events = repository.recent_signal_events(limit=200)
+    recent_decisions = repository.recent_decisions(limit=25)
+    recent_executions = repository.recent_executions(limit=25)
 
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Mode", settings.app_mode.value)
@@ -38,14 +41,24 @@ def run_dashboard() -> None:
     else:
         st.json(current_position)
 
+    if signal_events:
+        latest_signal = signal_events[0]
+        st.subheader("Latest Signal State")
+        sig1, sig2, sig3 = st.columns(3)
+        sig1.metric("Up Odds", f"{latest_signal['up_odds']:.2%}")
+        sig2.metric("Candidate", latest_signal["candidate_direction"] or "NONE")
+        sig3.metric(
+            "Confirm Progress",
+            f"{latest_signal['confirmation_progress_seconds']:.1f}s",
+        )
+
     st.subheader("Recent Decisions")
-    st.dataframe(repository.recent_decisions(limit=25), use_container_width=True)
+    st.dataframe(recent_decisions, use_container_width=True)
 
     st.subheader("Recent Executions")
-    st.dataframe(repository.recent_executions(limit=25), use_container_width=True)
+    st.dataframe(recent_executions, use_container_width=True)
 
     st.subheader("Recent Signal Events")
-    signal_events = repository.recent_signal_events(limit=200)
     st.dataframe(signal_events, use_container_width=True)
     if signal_events:
         chart_points = list(reversed(signal_events))

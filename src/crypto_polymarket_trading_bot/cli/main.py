@@ -56,6 +56,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"exits={summary.exits}")
         print(f"long_entries={summary.long_entries}")
         print(f"short_entries={summary.short_entries}")
+        print(f"completed_trades={summary.completed_trades}")
+        print(f"winning_trades={summary.winning_trades}")
+        print(f"losing_trades={summary.losing_trades}")
+        print(f"win_rate={summary.win_rate:.4f}")
+        print(f"gross_pnl_usd={summary.gross_pnl_usd:.4f}")
+        print(f"fees_usd={summary.fees_usd:.4f}")
+        print(f"net_pnl_usd={summary.net_pnl_usd:.4f}")
+        print(f"avg_trade_net_pnl_usd={summary.avg_trade_net_pnl_usd:.4f}")
+        print(f"max_drawdown_usd={summary.max_drawdown_usd:.4f}")
         return 0
 
     if args.command == "paper":

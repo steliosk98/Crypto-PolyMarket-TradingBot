@@ -15,12 +15,15 @@ def test_db_init_command(tmp_path: Path, capsys) -> None:
 def test_backtest_command(tmp_path: Path, capsys) -> None:
     csv_path = tmp_path / "ticks.csv"
     csv_path.write_text(
-        "timestamp,up_odds,market_id\n"
-        "2026-04-05T10:00:00+00:00,0.72,m1\n"
-        "2026-04-05T10:00:10+00:00,0.74,m1\n",
+        "timestamp,up_odds,reference_price,market_id\n"
+        "2026-04-05T10:00:00+00:00,0.72,84000,m1\n"
+        "2026-04-05T10:00:10+00:00,0.74,84040,m1\n"
+        "2026-04-05T10:05:00+00:00,0.20,84120,m2\n",
         encoding="utf-8",
     )
     exit_code = main(["backtest", "--input", str(csv_path)])
     output = capsys.readouterr().out
     assert exit_code == 0
     assert "Backtest summary" in output
+    assert "completed_trades=1" in output
+    assert "net_pnl_usd=" in output

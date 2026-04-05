@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     fixed_margin_usd: float = Field(default=25.0, gt=0.0)
     leverage: int = Field(default=4, ge=1)
 
+    backtest_fee_bps: float = Field(default=4.0, ge=0.0)
+    backtest_slippage_bps: float = Field(default=0.0, ge=0.0)
+
     binance_base_url: str = "https://fapi.binance.com"
     polymarket_base_url: str = "https://clob.polymarket.com"
     polymarket_ws_url: str = "wss://ws-subscriptions-clob.polymarket.com/ws/market"

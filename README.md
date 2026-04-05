@@ -25,7 +25,7 @@ The package lives under `src/crypto_polymarket_trading_bot/`.
 - `data/`: thin API client wrappers for Polymarket and Binance.
 - `strategy/`: threshold confirmation logic and 5m window state machine.
 - `execution/`: paper executor plus live execution interface/stub.
-- `backtest/`: CSV replay runner and summary metrics.
+- `backtest/`: CSV replay runner, trade simulation, and summary metrics.
 - `storage/`: SQLite schema and repository helpers.
 - `app/`: read-only Streamlit dashboard.
 - `cli/`: command-line entrypoints for initialization and runtime modes.
@@ -45,16 +45,16 @@ Initialize the local database:
 uv run cpmtb db-init
 ```
 
-Run a CSV replay backtest:
+Run the included sample backtest:
 
 ```bash
-uv run cpmtb backtest --input sample_ticks.csv
+uv run cpmtb backtest --input data/sample_ticks.csv
 ```
 
 Run the paper-mode replay loop:
 
 ```bash
-uv run cpmtb paper --input sample_ticks.csv
+uv run cpmtb paper --input data/sample_ticks.csv
 ```
 
 Launch the Streamlit dashboard:
@@ -65,7 +65,7 @@ uv run cpmtb streamlit
 
 ## Runtime Modes
 
-- `backtest`: replay stored ticks and output summary metrics.
+- `backtest`: replay stored ticks, simulate entries/exits, and output trade metrics.
 - `paper`: process ticks through the strategy and simulated executor while persisting run data locally.
 - `live`: reserved for a future real-execution path.
 
@@ -85,6 +85,8 @@ All variables are loaded with the `BOT_` prefix.
 - `BOT_FIXED_NOTIONAL_USD`: fixed notional size placeholder
 - `BOT_FIXED_MARGIN_USD`: fixed margin placeholder
 - `BOT_LEVERAGE`: predefined leverage placeholder
+- `BOT_BACKTEST_FEE_BPS`: round-trip fee input is calculated from per-side bps, default `4.0`
+- `BOT_BACKTEST_SLIPPAGE_BPS`: entry/exit slippage per side, default `0.0`
 - `BOT_BINANCE_BASE_URL`: default Binance futures base URL
 - `BOT_POLYMARKET_BASE_URL`: default Polymarket REST URL
 - `BOT_POLYMARKET_WS_URL`: default Polymarket websocket URL
@@ -97,18 +99,29 @@ See `.env.example` for defaults.
 
 The scaffold defines these core interfaces:
 
-- `OddsTick`: timestamped Polymarket odds update.
+- `OddsTick`: timestamped Polymarket odds update with optional BTC reference price.
 - `StrategyDecision`: target position (`LONG`, `SHORT`, `FLAT`) plus metadata.
 - `Executor`: consumes decisions and produces execution records.
 - `Repository`: persists signal events, decisions, positions, executions, and run summaries to SQLite.
 
 ## Backtesting Input
 
-The initial replay runner expects CSV input with:
+The replay runner expects CSV input with:
 
 - `timestamp`: ISO 8601 timestamp
 - `up_odds`: Polymarket BTC-up probability as a decimal
+- `reference_price` or `btc_price`: BTC price used to simulate PnL
 - `market_id`: optional identifier
+
+The current backtest reports:
+
+- completed trades
+- win rate
+- gross PnL
+- fees
+- net PnL
+- average trade net PnL
+- max drawdown
 
 ## Warning
 
