@@ -12,7 +12,12 @@ class HistoricalDataService:
     def __init__(self, settings: Settings, repository: Repository) -> None:
         self.settings = settings
         self.repository = repository
-        self.polymarket = PolymarketClient(settings.polymarket_gamma_base_url, settings.polymarket_clob_base_url)
+        self.polymarket = PolymarketClient(
+            settings.polymarket_gamma_base_url,
+            settings.polymarket_clob_base_url,
+            dns_mode=settings.polymarket_dns_mode,
+            doh_url=settings.polymarket_doh_url,
+        )
         self.binance = BinanceFuturesClient(settings.binance_base_url)
 
     async def fetch_polymarket_history(self, months: int) -> dict[str, int]:

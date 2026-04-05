@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     polymarket_gamma_base_url: str = "https://gamma-api.polymarket.com"
     polymarket_clob_base_url: str = "https://clob.polymarket.com"
     polymarket_ws_url: str = "wss://ws-subscriptions-clob.polymarket.com/ws/market"
+    polymarket_dns_mode: str = "auto"
+    polymarket_doh_url: str = "https://1.1.1.1/dns-query"
 
     streamlit_host: str = "127.0.0.1"
     streamlit_port: int = 8501

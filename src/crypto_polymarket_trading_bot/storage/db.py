@@ -210,4 +210,17 @@ def initialize_database(db_path: Path) -> None:
     with sqlite3.connect(db_path) as connection:
         for statement in SCHEMA_STATEMENTS:
             connection.execute(statement)
+        _ensure_column(connection, "polymarket_markets", "condition_id", "TEXT")
+        _ensure_column(connection, "polymarket_markets", "start_date", "TEXT")
+        _ensure_column(connection, "polymarket_markets", "end_date", "TEXT")
         connection.commit()
+
+
+def _ensure_column(connection: sqlite3.Connection, table_name: str, column_name: str, column_type: str) -> None:
+    existing_columns = {
+        row[1]
+        for row in connection.execute(f"PRAGMA table_info({table_name})")
+    }
+    if column_name in existing_columns:
+        return
+    connection.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")

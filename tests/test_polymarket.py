@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from pathlib import Path
 
+from crypto_polymarket_trading_bot.data.doh import extract_answer_ips
 from crypto_polymarket_trading_bot.data.polymarket import PolymarketMarket
 from crypto_polymarket_trading_bot.storage import Repository
 
@@ -73,3 +74,32 @@ def test_polymarket_repository_storage(tmp_path: Path) -> None:
     assert latest_market["clob_token_ids"] == ["token_yes", "token_no"]
     assert snapshots[0]["yes_price"] == 0.72
     assert snapshots[0]["no_token_id"] == "token_no"
+
+
+def test_doh_answer_parsing() -> None:
+    answers = [
+        {"name": "gamma-api.polymarket.com", "type": 1, "data": "172.64.153.51"},
+        {"name": "gamma-api.polymarket.com", "type": 1, "data": "104.18.34.205"},
+        {"name": "gamma-api.polymarket.com", "type": 28, "data": "2606:4700::6812:22cd"},
+    ]
+
+    assert extract_answer_ips(answers, "A") == ["172.64.153.51", "104.18.34.205"]
+    assert extract_answer_ips(answers, "AAAA") == ["2606:4700::6812:22cd"]
+
+
+def test_polymarket_up_down_aliases() -> None:
+    payload = {
+        "id": 456,
+        "slug": "btc-updown-5m-1775373600",
+        "question": "BTC Up or Down in 5m?",
+        "outcomes": "[\"Up\", \"Down\"]",
+        "outcomePrices": "[\"0.74\", \"0.26\"]",
+        "clobTokenIds": "[\"token_up\", \"token_down\"]",
+    }
+
+    market = PolymarketMarket.from_api(payload)
+
+    assert market.yes_price == 0.74
+    assert market.no_price == 0.26
+    assert market.yes_token_id == "token_up"
+    assert market.no_token_id == "token_down"

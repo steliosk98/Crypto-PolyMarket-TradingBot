@@ -14,6 +14,7 @@ import httpx
 
 from crypto_polymarket_trading_bot.backtest import load_ticks_from_csv, run_backtest
 from crypto_polymarket_trading_bot.config import Settings, get_settings
+from crypto_polymarket_trading_bot.data import PolymarketClientError
 from crypto_polymarket_trading_bot.execution import PaperExecutor
 from crypto_polymarket_trading_bot.historical import last_full_month_windows, run_monthly_backtests
 from crypto_polymarket_trading_bot.ingestion import HistoricalDataService, PolymarketIngestionService
@@ -98,7 +99,7 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("No market slug configured. Set BOT_POLYMARKET_MARKET_SLUG or pass --slug.")
         try:
             market = asyncio.run(_sync_market_info(runtime_settings, repository, slug))
-        except httpx.HTTPError as exc:
+        except (httpx.HTTPError, PolymarketClientError) as exc:
             print(f"Failed to load Polymarket market '{slug}': {exc}")
             return 1
         print(f"Resolved market {market.id} slug={market.slug} yes_token_id={market.yes_token_id}")
@@ -110,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
         repository = Repository(Path(runtime_settings.db_path))
         try:
             result = asyncio.run(HistoricalDataService(runtime_settings, repository).fetch_polymarket_history(months))
-        except httpx.HTTPError as exc:
+        except (httpx.HTTPError, PolymarketClientError) as exc:
             print(f"Failed to fetch Polymarket history: {exc}")
             return 1
         print(f"Fetched Polymarket markets={result['markets']} price_points={result['price_points']}")

@@ -11,7 +11,12 @@ class PolymarketIngestionService:
     def __init__(self, settings: Settings, repository: Repository) -> None:
         self.settings = settings
         self.repository = repository
-        self.client = PolymarketClient(settings.polymarket_gamma_base_url, settings.polymarket_clob_base_url)
+        self.client = PolymarketClient(
+            settings.polymarket_gamma_base_url,
+            settings.polymarket_clob_base_url,
+            dns_mode=settings.polymarket_dns_mode,
+            doh_url=settings.polymarket_doh_url,
+        )
 
     async def sync_market_by_slug(self, slug: str) -> PolymarketMarket:
         market = await self.client.get_market_by_slug(slug)

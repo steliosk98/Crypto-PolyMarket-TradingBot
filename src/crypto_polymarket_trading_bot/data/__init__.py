@@ -1,10 +1,17 @@
 from .binance import BinanceFuturesClient, BinanceKline
-from .polymarket import PolymarketClient, PolymarketMarket, PolymarketMarketStream, PolymarketPricePoint
+from .polymarket import (
+    PolymarketClient,
+    PolymarketClientError,
+    PolymarketMarket,
+    PolymarketMarketStream,
+    PolymarketPricePoint,
+)
 
 __all__ = [
     "BinanceFuturesClient",
     "BinanceKline",
     "PolymarketClient",
+    "PolymarketClientError",
     "PolymarketMarket",
     "PolymarketMarketStream",
     "PolymarketPricePoint",
