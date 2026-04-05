@@ -113,14 +113,41 @@ class PolymarketClient:
         payload = await self._request_json(self.gamma_base_url, f"/markets/slug/{slug}", timeout=10.0)
         return PolymarketMarket.from_api(dict(payload))
 
-    async def list_markets(self, limit: int, offset: int) -> list[PolymarketMarket]:
+    async def list_markets(
+        self,
+        limit: int,
+        offset: int,
+        *,
+        tag_slug: str | None = None,
+    ) -> list[PolymarketMarket]:
+        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        if tag_slug:
+            params["tag_slug"] = tag_slug
         payload = await self._request_json(
             self.gamma_base_url,
             "/markets",
-            params={"limit": limit, "offset": offset},
+            params=params,
             timeout=20.0,
         )
         return [PolymarketMarket.from_api(dict(row)) for row in list(payload)]
+
+    async def list_events(
+        self,
+        *,
+        limit: int,
+        offset: int,
+        tag_slug: str | None = None,
+    ) -> list[dict[str, Any]]:
+        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        if tag_slug:
+            params["tag_slug"] = tag_slug
+        payload = await self._request_json(
+            self.gamma_base_url,
+            "/events",
+            params=params,
+            timeout=30.0,
+        )
+        return [dict(row) for row in list(payload)]
 
     async def get_prices_history(
         self,

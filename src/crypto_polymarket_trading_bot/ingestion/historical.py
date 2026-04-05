@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from crypto_polymarket_trading_bot.config import Settings
-from crypto_polymarket_trading_bot.data import BinanceFuturesClient, PolymarketClient, PolymarketMarket, PolymarketPricePoint
+from crypto_polymarket_trading_bot.data import BinanceFuturesClient, PolymarketClient, PolymarketMarket
 from crypto_polymarket_trading_bot.historical import build_historical_ticks, last_full_month_windows
 from crypto_polymarket_trading_bot.storage import Repository
 
@@ -24,6 +24,7 @@ class HistoricalDataService:
         windows = last_full_month_windows(months)
         overall_start = windows[0].start
         overall_end = windows[-1].end
+        self.repository.clear_polymarket_history()
         markets = await self._discover_btc_5m_markets(overall_start, overall_end)
         fetched_points = 0
         fetched_markets = 0
@@ -82,10 +83,14 @@ class HistoricalDataService:
         return {"ticks": len(ticks)}
 
     async def _discover_btc_5m_markets(self, overall_start: datetime, overall_end: datetime) -> list[PolymarketMarket]:
-        markets: list[PolymarketMarket] = []
-        page_size = self.settings.polymarket_market_page_size
-        for page in range(self.settings.polymarket_market_page_limit):
-            batch = await self.polymarket.list_markets(limit=page_size, offset=page * page_size)
+        page_size = 500
+        start_target = max(overall_start, datetime(2025, 12, 18, tzinfo=UTC))
+        start_offset = await self._find_crypto_market_offset(start_target, page_size)
+        end_offset = await self._find_crypto_market_offset(overall_end, page_size)
+        markets: dict[str, PolymarketMarket] = {}
+
+        for offset in range(max(0, start_offset - page_size), end_offset + (page_size * 2), page_size):
+            batch = await self.polymarket.list_markets(limit=page_size, offset=offset, tag_slug="crypto")
             if not batch:
                 break
             for market in batch:
@@ -95,12 +100,50 @@ class HistoricalDataService:
                 market_start = market.start_date or overall_start
                 if market_end < overall_start or market_start >= overall_end:
                     continue
-                markets.append(market)
-        unique: dict[str, PolymarketMarket] = {market.id: market for market in markets}
-        return list(unique.values())
+                markets[market.id] = market
+        return list(markets.values())
+
+    async def _find_crypto_market_offset(self, target: datetime, page_size: int) -> int:
+        high = page_size
+        max_offset = 500000
+        while high <= max_offset:
+            market = await self._fetch_market_at_offset(high)
+            if market is None:
+                break
+            market_end = market.end_date or market.start_date
+            if market_end is not None and market_end >= target:
+                break
+            high *= 2
+        low = max(0, high // 2)
+        high = min(high, max_offset)
+        while low < high:
+            mid = ((low + high) // (2 * page_size)) * page_size
+            if mid == low:
+                break
+            market = await self._fetch_market_at_offset(mid)
+            if market is None:
+                high = mid
+                continue
+            market_end = market.end_date or market.start_date
+            if market_end is None or market_end >= target:
+                high = mid
+            else:
+                low = mid
+        return low
+
+    async def _fetch_market_at_offset(self, offset: int) -> PolymarketMarket | None:
+        markets = await self.polymarket.list_markets(limit=1, offset=offset, tag_slug="crypto")
+        return markets[0] if markets else None
 
 
 def _is_btc_5m_market(market: PolymarketMarket) -> bool:
     slug = (market.slug or "").lower()
-    question = (market.question or "").lower()
-    return slug.startswith("btc-updown-5m-") or ("btc" in question and "5m" in question)
+    return slug.startswith("btc-updown-5m-")
+
+
+def _parse_datetime(value) -> datetime | None:
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value.astimezone(UTC)
+    return datetime.fromisoformat(str(value).replace("Z", "+00:00")).astimezone(UTC)

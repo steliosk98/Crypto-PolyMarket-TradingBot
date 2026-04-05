@@ -1,8 +1,9 @@
 from datetime import UTC, datetime, timedelta
 
 from crypto_polymarket_trading_bot.config import Settings
-from crypto_polymarket_trading_bot.data import BinanceKline, PolymarketPricePoint
+from crypto_polymarket_trading_bot.data import BinanceKline, PolymarketMarket, PolymarketPricePoint
 from crypto_polymarket_trading_bot.historical import build_historical_ticks, last_full_month_windows, run_monthly_backtests
+from crypto_polymarket_trading_bot.ingestion.historical import _is_btc_5m_market
 
 
 def test_last_full_month_windows_utc() -> None:
@@ -79,3 +80,41 @@ def build_tick(timestamp: datetime, up_odds: float, reference_price: float):
         last_trade_yes=up_odds,
         reference_price=reference_price,
     )
+
+
+def test_btc_5m_market_filter_matches_current_slug_pattern() -> None:
+    market = PolymarketMarket(
+        id="1",
+        slug="btc-updown-5m-1766101200",
+        question="Bitcoin Up or Down - December 18, 6:40PM-6:45PM ET",
+        active=True,
+        closed=True,
+        accepting_orders=False,
+        best_bid=None,
+        best_ask=None,
+        last_trade_price=None,
+        outcomes=["Up", "Down"],
+        outcome_prices=[0.5, 0.5],
+        clob_token_ids=["up", "down"],
+    )
+
+    assert _is_btc_5m_market(market) is True
+
+
+def test_btc_5m_market_filter_rejects_15m_slug() -> None:
+    market = PolymarketMarket(
+        id="2",
+        slug="btc-updown-15m-1766101200",
+        question="Bitcoin Up or Down - December 18, 6:30PM-6:45PM ET",
+        active=True,
+        closed=True,
+        accepting_orders=False,
+        best_bid=None,
+        best_ask=None,
+        last_trade_price=None,
+        outcomes=["Up", "Down"],
+        outcome_prices=[0.5, 0.5],
+        clob_token_ids=["up", "down"],
+    )
+
+    assert _is_btc_5m_market(market) is False

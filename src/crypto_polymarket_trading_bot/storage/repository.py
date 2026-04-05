@@ -123,6 +123,9 @@ class Repository:
             ],
         )
 
+    def clear_polymarket_history(self) -> None:
+        self._execute("DELETE FROM polymarket_history", ())
+
     def insert_binance_klines(self, klines: list[BinanceKline]) -> None:
         if not klines:
             return
