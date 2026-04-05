@@ -32,8 +32,8 @@ def test_monthly_backtest_skips_missing_exit_price() -> None:
     settings = Settings()
     window = last_full_month_windows(1, now=datetime(2026, 4, 5, 12, 0, tzinfo=UTC))[0]
     ticks = [
-        build_tick(window.start, 0.72, 84000),
-        build_tick(window.start + timedelta(seconds=10), 0.74, 84020),
+        build_tick(window.start, 0.82, 84000),
+        build_tick(window.start + timedelta(seconds=20), 0.84, 84020),
     ]
     klines = [
         BinanceKline("BTCUSDT", "1m", window.start, window.start + timedelta(seconds=59), 84000, 84020, 83980, 84010, 1),
@@ -50,11 +50,12 @@ def test_monthly_backtest_rollup() -> None:
     settings = Settings()
     window = last_full_month_windows(1, now=datetime(2026, 4, 5, 12, 0, tzinfo=UTC))[0]
     ticks = [
-        build_tick(window.start, 0.72, 84000),
-        build_tick(window.start + timedelta(seconds=10), 0.74, 84020),
-        build_tick(window.start + timedelta(minutes=5), 0.20, 84100),
-        build_tick(window.start + timedelta(minutes=5, seconds=10), 0.18, 84060),
-        build_tick(window.start + timedelta(minutes=10), 0.80, 83980),
+        build_tick(window.start, 0.82, 84000),
+        build_tick(window.start + timedelta(seconds=20), 0.84, 84020),
+        build_tick(window.start + timedelta(minutes=5), 0.18, 84100),
+        build_tick(window.start + timedelta(minutes=5, seconds=20), 0.16, 84060),
+        build_tick(window.start + timedelta(minutes=10), 0.82, 83980),
+        build_tick(window.start + timedelta(minutes=10, seconds=20), 0.84, 84010),
     ]
     klines = [
         BinanceKline("BTCUSDT", "1m", window.start + timedelta(minutes=i), window.start + timedelta(minutes=i, seconds=59), 84000 + i * 10, 0, 0, 0, 1)

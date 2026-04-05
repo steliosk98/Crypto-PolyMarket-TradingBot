@@ -20,9 +20,9 @@ def make_tick(second_offset: int, up_odds: float, price: float, market_id: str) 
 def test_backtest_computes_completed_trade_metrics() -> None:
     settings = Settings()
     ticks = [
-        make_tick(0, 0.72, 84000, "m1"),
-        make_tick(10, 0.74, 84040, "m1"),
-        make_tick(300, 0.20, 84120, "m2"),
+        make_tick(0, 0.82, 84000, "m1"),
+        make_tick(20, 0.84, 84040, "m1"),
+        make_tick(300, 0.18, 84120, "m2"),
     ]
 
     summary = run_backtest(ticks, settings)
@@ -41,8 +41,8 @@ def test_backtest_computes_completed_trade_metrics() -> None:
 def test_backtest_requires_reference_price() -> None:
     settings = Settings()
     ticks = [
-        OddsTick(timestamp=BASE, up_odds=0.72, market_id="m1", reference_price=None),
-        OddsTick(timestamp=BASE + timedelta(seconds=10), up_odds=0.74, market_id="m1", reference_price=None),
+        OddsTick(timestamp=BASE, up_odds=0.82, market_id="m1", reference_price=None),
+        OddsTick(timestamp=BASE + timedelta(seconds=20), up_odds=0.84, market_id="m1", reference_price=None),
     ]
 
     try:

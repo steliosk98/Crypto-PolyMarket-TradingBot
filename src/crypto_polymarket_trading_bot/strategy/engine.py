@@ -52,6 +52,10 @@ class StrategyEngine:
                 self._candidate = None
             return decisions
 
+        if self._past_entry_cutoff(tick_time, candle_start):
+            self._candidate = None
+            return decisions
+
         if self._candidate is None or self._candidate.direction != threshold_direction:
             self._candidate = CandidateState(direction=threshold_direction, started_at=tick_time)
             return decisions
@@ -76,6 +80,9 @@ class StrategyEngine:
     def confirmation_progress(self, tick: OddsTick) -> float:
         tick_time = self._normalize_ts(tick.timestamp)
         threshold_direction = self._threshold_direction(tick.up_odds)
+        candle_start, _ = self._candle_bounds(tick_time)
+        if self._past_entry_cutoff(tick_time, candle_start):
+            return 0.0
         if threshold_direction is None or self._candidate is None:
             return 0.0
         if threshold_direction != self._candidate.direction:
@@ -84,7 +91,8 @@ class StrategyEngine:
 
     def classify_tick(self, tick: OddsTick) -> tuple[datetime, SignalDirection | None, float]:
         candle_start, _ = self._candle_bounds(tick.timestamp)
-        return candle_start, self._threshold_direction(tick.up_odds), self.confirmation_progress(tick)
+        direction = None if self._past_entry_cutoff(self._normalize_ts(tick.timestamp), candle_start) else self._threshold_direction(tick.up_odds)
+        return candle_start, direction, self.confirmation_progress(tick)
 
     def _reset_candle(self, candle_start: datetime, candle_end: datetime) -> None:
         self._active_candle_start = candle_start
@@ -98,6 +106,9 @@ class StrategyEngine:
         if up_odds <= self.settings.down_threshold:
             return SignalDirection.SHORT
         return None
+
+    def _past_entry_cutoff(self, timestamp: datetime, candle_start: datetime) -> bool:
+        return (timestamp - candle_start).total_seconds() > self.settings.entry_cutoff_seconds
 
     def _candle_bounds(self, timestamp: datetime) -> tuple[datetime, datetime]:
         ts = self._normalize_ts(timestamp)

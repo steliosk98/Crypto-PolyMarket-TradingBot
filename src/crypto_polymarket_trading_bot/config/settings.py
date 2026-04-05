@@ -24,10 +24,11 @@ class Settings(BaseSettings):
     polymarket_market_slug: str | None = None
     polymarket_market_id: str | None = None
 
-    up_threshold: float = Field(default=0.70, ge=0.0, le=1.0)
-    down_threshold: float = Field(default=0.30, ge=0.0, le=1.0)
-    confirmation_seconds: int = Field(default=10, ge=1)
+    up_threshold: float = Field(default=0.80, ge=0.0, le=1.0)
+    down_threshold: float = Field(default=0.20, ge=0.0, le=1.0)
+    confirmation_seconds: int = Field(default=20, ge=1)
     candle_minutes: int = Field(default=5, ge=1)
+    entry_cutoff_seconds: int = Field(default=150, ge=1)
 
     fixed_notional_usd: float = Field(default=100.0, gt=0.0)
     fixed_margin_usd: float = Field(default=25.0, gt=0.0)
