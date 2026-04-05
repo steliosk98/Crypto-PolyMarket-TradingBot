@@ -19,7 +19,7 @@ Build a Python-first trading system around a Polymarket BTC 5m signal and Binanc
 
 - The signal source is the Polymarket BTC 5m market.
 - `LONG` is confirmed when up odds remain `>= 0.70` for at least `10` consecutive seconds.
-- `SHORT` is confirmed when up odds remain `<= 0.30` for at least `10` consecutive seconds.
+- `SHORT` is confirmed when down odds remain `>= 0.80` for at least `20` consecutive seconds.
 - Only one position is allowed at a time.
 - Position sizing uses fixed notional, fixed margin, and predefined leverage from config.
 - The strategy does not flip intra-candle in v1.

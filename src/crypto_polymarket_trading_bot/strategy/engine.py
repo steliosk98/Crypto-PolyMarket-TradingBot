@@ -101,9 +101,10 @@ class StrategyEngine:
         self._entry_emitted = None
 
     def _threshold_direction(self, up_odds: float) -> SignalDirection | None:
+        down_odds = 1.0 - up_odds
         if up_odds >= self.settings.up_threshold:
             return SignalDirection.LONG
-        if up_odds <= self.settings.down_threshold:
+        if down_odds >= self.settings.down_threshold:
             return SignalDirection.SHORT
         return None
 

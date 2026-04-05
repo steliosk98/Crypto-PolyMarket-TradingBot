@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     polymarket_market_id: str | None = None
 
     up_threshold: float = Field(default=0.80, ge=0.0, le=1.0)
-    down_threshold: float = Field(default=0.20, ge=0.0, le=1.0)
+    down_threshold: float = Field(default=0.80, ge=0.0, le=1.0)
     confirmation_seconds: int = Field(default=20, ge=1)
     candle_minutes: int = Field(default=5, ge=1)
     entry_cutoff_seconds: int = Field(default=150, ge=1)

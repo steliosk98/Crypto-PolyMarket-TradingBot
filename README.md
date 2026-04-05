@@ -8,7 +8,7 @@ The current strategy contract is:
 
 - Watch the Polymarket BTC 5m market.
 - Confirm `LONG` if BTC up odds stay at or above `70%` for at least `10` consecutive seconds.
-- Confirm `SHORT` if BTC up odds stay at or below `30%` for at least `10` consecutive seconds.
+- Confirm `SHORT` if BTC down odds stay at or above `80%` for at least `20` consecutive seconds.
 - Open one fixed-size Binance Futures position per 5m window.
 - Hold until the end of that 5m window.
 - Close at candle end.
