@@ -1,0 +1,55 @@
+from __future__ import annotations
+
+from enum import StrEnum
+from functools import lru_cache
+from pathlib import Path
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class AppMode(StrEnum):
+    BACKTEST = "backtest"
+    PAPER = "paper"
+    LIVE = "live"
+
+
+class Settings(BaseSettings):
+    app_name: str = "Crypto PolyMarket Trading Bot"
+    app_mode: AppMode = AppMode.PAPER
+    symbol: str = "BTCUSDT"
+    db_path: Path = Path("data/trading_bot.db")
+
+    polymarket_market_slug: str | None = None
+    polymarket_market_id: str | None = None
+
+    up_threshold: float = Field(default=0.70, ge=0.0, le=1.0)
+    down_threshold: float = Field(default=0.30, ge=0.0, le=1.0)
+    confirmation_seconds: int = Field(default=10, ge=1)
+    candle_minutes: int = Field(default=5, ge=1)
+
+    fixed_notional_usd: float = Field(default=100.0, gt=0.0)
+    fixed_margin_usd: float = Field(default=25.0, gt=0.0)
+    leverage: int = Field(default=4, ge=1)
+
+    binance_base_url: str = "https://fapi.binance.com"
+    polymarket_base_url: str = "https://clob.polymarket.com"
+    polymarket_ws_url: str = "wss://ws-subscriptions-clob.polymarket.com/ws/market"
+
+    streamlit_host: str = "127.0.0.1"
+    streamlit_port: int = 8501
+
+    binance_api_key: str | None = None
+    binance_api_secret: str | None = None
+
+    model_config = SettingsConfigDict(
+        env_prefix="BOT_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    return Settings()
