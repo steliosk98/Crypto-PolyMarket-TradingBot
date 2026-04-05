@@ -1,3 +1,8 @@
+> [!WARNING]
+> Backtests and proof-of-concept replays showed negative to minimal profits after fees, so this strategy is not worth proceeding with in its current form.
+
+This project explored a simple systematic idea: use Polymarket BTC direction markets as a short-horizon signal for Binance Futures trades. The bot watches Polymarket odds for BTC going up or down over a fixed market window, waits for a strong threshold-based signal to persist for a short confirmation period, opens a fixed-size long or short on Binance, and closes the trade when that Polymarket market ends. The research focused on whether Polymarket conviction could translate into a profitable futures signal after execution costs.
+
 # Crypto PolyMarket Trading Bot
 
 Python trading bot scaffold for a BTC 5m strategy that reads Polymarket odds and drives Binance Futures decisions. The repository is intentionally split so trading logic, backtesting, execution, and storage live in Python modules, while Streamlit is used only as a read-only monitoring UI.
